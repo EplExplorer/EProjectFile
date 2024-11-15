@@ -1,5 +1,9 @@
 ***Only Chinese document is available.***
 
+# fork说明
+
+此fork修复了模块解密会被版本干扰的漏洞，增加了自动推断与手动设置解密算法
+
 # EProjectFile
 [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa.svg)](CODE_OF_CONDUCT.md)
 [![NuGet](https://img.shields.io/nuget/v/QIQI.EProjectFile.svg)](https://www.nuget.org/packages/QIQI.EProjectFile)  
