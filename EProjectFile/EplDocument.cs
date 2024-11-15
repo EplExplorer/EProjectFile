@@ -11,6 +11,13 @@ namespace QIQI.EProjectFile
 {
     public class EplDocument
     {
+        public enum DocumentType
+        {
+            Auto,
+            Source, // 易语言源代码
+            Module  // 易语言模块
+        }
+
         public List<ISection> Sections { get; } = new List<ISection>();
         public Encoding DetermineEncoding()
         {
@@ -34,11 +41,11 @@ namespace QIQI.EProjectFile
             return (TSection)Sections.First(x => x.SectionKey == key.SectionKey);
         }
 
-        public void Load(Stream stream, ProjectFileReader.OnInputPassword inputPassword = null)
+        public void Load(Stream stream, ProjectFileReader.OnInputPassword inputPassword = null, bool ignoreVersion = false, DocumentType type = DocumentType.Auto)
         {
             var encoding = Encoding.GetEncoding("gbk");
             Sections.Clear();
-            using (var reader = new ProjectFileReader(stream, inputPassword))
+            using (var reader = new ProjectFileReader(stream, inputPassword, ignoreVersion, type))
             {
                 while (!reader.IsFinish)
                 {

@@ -5,25 +5,19 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using static QIQI.EProjectFile.EplDocument;
 
 namespace QIQI.EProjectFile
 {
     public class ProjectFileReader : IDisposable
     {
-
-        private enum ProjectType
-        {
-            Source, // 易语言源代码
-            Module  // 易语言模块
-        }
-
         public delegate string OnInputPassword(string passwordHint);
         public bool IsFinish { get; private set; } = false;
 
         private BinaryReader reader;
         public bool CryptEC { get; } = false;
 
-        public ProjectFileReader(Stream stream, OnInputPassword inputPassword = null, bool ignoreVersion = false)
+        public ProjectFileReader(Stream stream, OnInputPassword inputPassword = null, bool ignoreVersion = false, DocumentType type = DocumentType.Auto)
         {
             reader = new BinaryReader(stream, Encoding.GetEncoding("gbk"));
 
@@ -45,13 +39,17 @@ namespace QIQI.EProjectFile
                     }
                 }
 
-                // 通过tips长度来判断是哪种加密 按易语言规定tips最长500个字符 所以后面两位必定是0
-                ProjectType type = reader.ReadUInt32() >> 16 == 0 ? ProjectType.Module : ProjectType.Source;
-                reader.BaseStream.Position -= 4;
+                if (type == DocumentType.Auto)
+                {
+
+                    // 通过tips长度来判断是哪种加密 按易语言规定tips最长500个字符 所以后面两位必定是0
+                    type = reader.ReadUInt32() >> 16 == 0 ? DocumentType.Module : DocumentType.Source;
+                    reader.BaseStream.Position -= 4;
+                }
 
                 switch (type)
                 {
-                    case ProjectType.Source:
+                    case DocumentType.Source:
                         {
                             string password = inputPassword?.Invoke(null);
                             if (string.IsNullOrEmpty(password))
@@ -76,7 +74,7 @@ namespace QIQI.EProjectFile
                             }
                         }
                         break;
-                    case ProjectType.Module:
+                    case DocumentType.Module:
                         {
                             CryptEC = true;
                             int tip_bytes = reader.ReadInt32();
