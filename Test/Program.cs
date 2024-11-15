@@ -16,8 +16,40 @@ namespace Test
             return "123456";
         }
 
-        // 测试读取加密易文件
-        static void TestDecrypt(EplDocument doc)
+        // 测试读取普通易代码
+        static void TestE(EplDocument doc)
+        {
+            try
+            {
+                doc.Load(File.OpenRead("../../../assets/common.e"));
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("读取普通易代码 - 失败");
+                Console.WriteLine(e);
+                return;
+            }
+            Console.WriteLine("读取普通易代码 - 成功");
+        }
+
+        // 测试读取加密易代码
+        static void TestDecryptE(EplDocument doc)
+        {
+            try
+            {
+                doc.Load(File.OpenRead("../../../assets/encrypted.e"), InputPassword);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("读取加密易代码 - 失败");
+                Console.WriteLine(e);
+                return;
+            }
+            Console.WriteLine("读取加密易代码 - 成功");
+        }
+
+        // 测试读取加密易模块
+        static void TestDecryptEC(EplDocument doc)
         {
             try
             {
@@ -25,15 +57,15 @@ namespace Test
             }
             catch(Exception e)
             {
-                Console.WriteLine("读取加密易文件 - 失败");
+                Console.WriteLine("读取加密易模块 - 失败");
                 Console.WriteLine(e);
                 return;
             }
-            Console.WriteLine("读取加密易文件 - 成功");
+            Console.WriteLine("读取加密易模块 - 成功");
         }
 
-        // 测试版本混淆加密易文件
-        static void TestDecryptObfuscate(EplDocument doc)
+        // 测试版本混淆加密易模块
+        static void TestDecryptObfuscateEC(EplDocument doc)
         {
             try
             {
@@ -41,11 +73,11 @@ namespace Test
             }
             catch (Exception e)
             {
-                Console.WriteLine("读取版本混淆加密易文件 - 失败");
+                Console.WriteLine("读取版本混淆加密易模块 - 失败");
                 Console.WriteLine(e);
                 return;
             }
-            Console.WriteLine("读取版本混淆加密易文件 - 成功");
+            Console.WriteLine("读取版本混淆加密易模块 - 成功");
         }
 
         static void Main(string[] args)
@@ -55,8 +87,10 @@ namespace Test
 
             var doc = new EplDocument();
 
-            TestDecrypt(doc);
-            TestDecryptObfuscate(doc);
+            TestE(doc);
+            TestDecryptE(doc);
+            TestDecryptEC(doc);
+            TestDecryptObfuscateEC(doc);
 
         }
     }
