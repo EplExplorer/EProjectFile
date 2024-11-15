@@ -10,22 +10,48 @@ namespace QIQI.EProjectFile
 {
     public class ProjectFileReader : IDisposable
     {
+
+        private enum ProjectType
+        {
+            Source, // 易语言源代码
+            Module  // 易语言模块
+        }
+
         public delegate string OnInputPassword(string passwordHint);
         public bool IsFinish { get; private set; } = false;
 
         private BinaryReader reader;
         public bool CryptEC { get; } = false;
 
-        public ProjectFileReader(Stream stream, OnInputPassword inputPassword = null)
+        public ProjectFileReader(Stream stream, OnInputPassword inputPassword = null, bool ignoreVersion = false)
         {
             reader = new BinaryReader(stream, Encoding.GetEncoding("gbk"));
-            int magic1 = reader.ReadInt32();
-            int magic2 = reader.ReadInt32();
-            if (magic1 == 0x454C5457) // WTLE
+
+            int magicHigh = reader.ReadInt32();
+            int magicLow = 0;
+
+            if (magicHigh == 0x454C5457) // WTLE 加密文件
             {
-                switch (magic2)
+
+                int majorVersion = reader.ReadInt16();
+                int minorVersion = reader.ReadInt16();
+
+                // 忽略版本
+                if (!ignoreVersion)
                 {
-                    case 0x00000001:
+                    if (majorVersion > 1 || minorVersion > 2) // 易语言当前最新加密版本为1.2
+                    {
+                        throw new Exception($"不支持的加密版本 {majorVersion}.{minorVersion}");
+                    }
+                }
+
+                // 通过tips长度来判断是哪种加密 按易语言规定tips最长500个字符 所以后面两位必定是0
+                ProjectType type = reader.ReadUInt32() >> 16 == 0 ? ProjectType.Module : ProjectType.Source;
+                reader.BaseStream.Position -= 4;
+
+                switch (type)
+                {
+                    case ProjectType.Source:
                         {
                             string password = inputPassword?.Invoke(null);
                             if (string.IsNullOrEmpty(password))
@@ -50,7 +76,7 @@ namespace QIQI.EProjectFile
                             }
                         }
                         break;
-                    case 0x00020001:
+                    case ProjectType.Module:
                         {
                             CryptEC = true;
                             int tip_bytes = reader.ReadInt32();
@@ -78,13 +104,16 @@ namespace QIQI.EProjectFile
                             }
                         }
                         break;
-                    default:
-                        throw new Exception($"不支持此类加密文件 [Type=0x{magic2:x8}]");
                 }
-                magic1 = reader.ReadInt32();
-                magic2 = reader.ReadInt32();
+
+                // 读取解密之后的magic
+                magicHigh = reader.ReadInt32();
             }
-            if (magic1 != 0x54574E43 || magic2 != 0x47525045) // CNWTEPRG
+
+            // 读取magic低32位
+            magicLow = reader.ReadInt32();
+
+            if (magicHigh != 0x54574E43 || magicLow != 0x47525045) // CNWTEPRG
             {
                 throw new Exception("不是易语言工程文件");
             }
